@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"regexp"
+	"strings"
 )
 
 // LinkMsg `link message struct`
@@ -85,7 +86,13 @@ var regPattern = regexp.MustCompile(regStr)
 
 //  real send request to api
 func (w *WebHook) sendPayload(payload *PayLoad) error {
-	apiURL := w.APIURL + w.AccessToken
+	var apiURL string
+	if strings.Contains(w.AccessToken, w.APIURL) {
+		apiURL = w.AccessToken
+	} else {
+		apiURL = w.APIURL + w.AccessToken
+	}
+
 	//  get config
 	bs, _ := json.Marshal(payload)
 	//  request api
