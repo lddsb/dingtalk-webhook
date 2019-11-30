@@ -272,7 +272,7 @@ func (w *WebHook) SendLinkCardMsg(messages []LinkMsg) error {
 
 // getSign get sign
 func (w *WebHook) getSign() (timestamp, sha string) {
-	timestamp = strconv.FormatInt(time.Now().Unix(), 10)
+	timestamp = strconv.FormatInt(time.Now().Unix() / int64(time.Millisecond), 10)
 	message := timestamp + "\n" + w.Secret
 
 	h := hmac.New(sha256.New, []byte(w.Secret))
