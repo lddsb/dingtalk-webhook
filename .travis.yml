@@ -1,0 +1,19 @@
+language: golang
+os: linux
+
+env: GO111MODULE=on GOFLAGS='-mod vendor'
+
+git:
+  depth: 1
+
+install: true
+
+go:
+  - 1.x
+  - master
+
+script:
+  - go test -race -coverprofile=coverage.txt -covermode=atomic
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

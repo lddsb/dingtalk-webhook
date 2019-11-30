@@ -2,13 +2,19 @@ package webhook
 
 import (
 	"bytes"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
+	"time"
 )
 
 // LinkMsg `link message struct`
@@ -62,6 +68,7 @@ type PayLoad struct {
 type WebHook struct {
 	AccessToken string `json:"accessToken"`
 	APIURL      string `json:"apiUrl"`
+	Secret      string
 }
 
 // Response `DingTalk web hook response struct`
@@ -72,13 +79,13 @@ type Response struct {
 
 // NewWebHook `new a WebHook`
 func NewWebHook(accessToken string) *WebHook {
-	baseAPI := "https://oapi.dingtalk.com/robot/send?access_token="
+	baseAPI := "https://oapi.dingtalk.com/robot/send"
 	return &WebHook{AccessToken: accessToken, APIURL: baseAPI}
 }
 
 // reset api URL
 func (w *WebHook) resetAPIURL() {
-	w.APIURL = "https://oapi.dingtalk.com/robot/send?access_token="
+	w.APIURL = "https://oapi.dingtalk.com/robot/send"
 }
 
 var regStr = `^1([38][0-9]|14[57]|5[^4])\d{8}$`
@@ -86,11 +93,22 @@ var regPattern = regexp.MustCompile(regStr)
 
 //  real send request to api
 func (w *WebHook) sendPayload(payload *PayLoad) error {
+	params := make(map[string]string)
 	var apiURL string
 	if strings.Contains(w.AccessToken, w.APIURL) {
 		apiURL = w.AccessToken
 	} else {
-		apiURL = w.APIURL + w.AccessToken
+		params["access_token"] = w.AccessToken
+		apiURL = w.APIURL
+	}
+
+	if w.Secret != "" {
+		params["timestamp"], params["sign"] = w.getSign()
+	}
+
+	// add params
+	if len(params) > 0 {
+		apiURL = addParamsToURL(params, apiURL)
 	}
 
 	//  get config
@@ -250,4 +268,28 @@ func (w *WebHook) SendLinkCardMsg(messages []LinkMsg) error {
 			Links: messages,
 		},
 	})
+}
+
+// getSign get sign
+func (w *WebHook) getSign() (timestamp, sha string) {
+	timestamp = strconv.FormatInt(time.Now().Unix(), 10)
+	message := timestamp + "\n" + w.Secret
+
+	h := hmac.New(sha256.New, []byte(w.Secret))
+	h.Write([]byte(message))
+
+	return timestamp, base64.StdEncoding.EncodeToString(h.Sum(nil))
+}
+
+// addPramsToUrl
+func addParamsToURL(params map[string]string, originURL string) string {
+	u, _ := url.Parse(originURL)
+	q, _ := url.ParseQuery(u.RawQuery)
+
+	for key, val := range params {
+		q.Set(key, val)
+	}
+
+	u.RawQuery = q.Encode()
+	return u.String()
 }

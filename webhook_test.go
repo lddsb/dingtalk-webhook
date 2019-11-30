@@ -26,9 +26,9 @@ func TestWebHook(t *testing.T) {
 		t.Error("json unmarshal error should be catch!")
 	}
 
-	webHook.APIURL = "http://ip.360.cn/IPShare/info"
+	webHook.resetAPIURL()
 	err = webHook.sendPayload(payLoad)
-	if nil != err {
+	if nil == err {
 		t.Error(err)
 	}
 
