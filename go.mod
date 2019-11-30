@@ -1,3 +1,3 @@
-module github/lddsb/dingtalk-webhook
+module github.com/lddsb/dingtalk-webhook
 
 go 1.13
