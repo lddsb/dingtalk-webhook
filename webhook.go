@@ -88,7 +88,7 @@ func (w *WebHook) resetAPIURL() {
 	w.APIURL = "https://oapi.dingtalk.com/robot/send"
 }
 
-var regStr = `^1([38][0-9]|14[57]|5[^4])\d{8}$`
+var regStr = `(13\d|14[579]|15[^4\D]|17[^49\D]|18\d)\d{8}`
 var regPattern = regexp.MustCompile(regStr)
 
 //  real send request to api
