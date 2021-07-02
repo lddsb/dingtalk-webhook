@@ -11,7 +11,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -66,8 +65,8 @@ type PayLoad struct {
 
 // WebHook `web hook base config`
 type WebHook struct {
-	AccessToken string `json:"accessToken"`
-	APIURL      string `json:"apiUrl"`
+	accessToken string
+	apiUrl      string
 	Secret      string
 }
 
@@ -80,26 +79,23 @@ type Response struct {
 // NewWebHook `new a WebHook`
 func NewWebHook(accessToken string) *WebHook {
 	baseAPI := "https://oapi.dingtalk.com/robot/send"
-	return &WebHook{AccessToken: accessToken, APIURL: baseAPI}
+	return &WebHook{accessToken: accessToken, apiUrl: baseAPI}
 }
 
 // reset api URL
-func (w *WebHook) resetAPIURL() {
-	w.APIURL = "https://oapi.dingtalk.com/robot/send"
+func (w *WebHook) resetApiUrl() {
+	w.apiUrl = "https://oapi.dingtalk.com/robot/send"
 }
-
-var regStr = `(13\d|14[579]|15[^4\D]|17[^49\D]|18\d)\d{8}`
-var regPattern = regexp.MustCompile(regStr)
 
 //  real send request to api
 func (w *WebHook) sendPayload(payload *PayLoad) error {
 	params := make(map[string]string)
 	var apiURL string
-	if strings.Contains(w.AccessToken, w.APIURL) {
-		apiURL = w.AccessToken
+	if strings.Contains(w.accessToken, w.apiUrl) {
+		apiURL = w.accessToken
 	} else {
-		params["access_token"] = w.AccessToken
-		apiURL = w.APIURL
+		params["access_token"] = w.accessToken
+		apiURL = w.apiUrl
 	}
 
 	if w.Secret != "" {
@@ -180,16 +176,6 @@ func (w *WebHook) SendLinkMsg(title, content, picURL, msgURL string) error {
 
 // SendMarkdownMsg `send a markdown msg`
 func (w *WebHook) SendMarkdownMsg(title, content string, isAtAll bool, mobiles ...string) error {
-	firstLine := false
-	for _, mobile := range mobiles {
-		if regPattern.MatchString(mobile) {
-			if false == firstLine {
-				content += "#####"
-			}
-			content += " @" + mobile
-			firstLine = true
-		}
-	}
 	//  send request
 	return w.sendPayload(&PayLoad{
 		MsgType: "markdown",
